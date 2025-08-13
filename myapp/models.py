@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 # Division Model
 class Division(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -20,26 +21,41 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, email, password=None, **extra_fields):
-        extra_fields.setdefault('role', User.Role.ADMIN)
+        extra_fields.setdefault('role', 'admin')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(username, email, password, **extra_fields)
 
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-
 class User(AbstractUser):
     ROLE_CHOICES = (
+        ('admin', 'Admin'),
         ('researcher','Researcher'),
         ('assistant','Assistant'),
         ('head_division','Head of Division'),
         ('head_department','Head of Department'),
+        ('director', 'Director'),  # kama unataka pia director awe role
     )
 
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     division = models.ForeignKey('Division', on_delete=models.SET_NULL, null=True, blank=True)
-    
+
+    # Fix reverse accessor clash
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='myapp_user_set',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='myapp_user_permissions_set',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
+
     # Fix reverse accessor clash
     groups = models.ManyToManyField(
         'auth.Group',

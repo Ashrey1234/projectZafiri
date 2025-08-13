@@ -12,9 +12,6 @@ from django.contrib.auth import authenticate
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    """
-    Simple login API without JWT
-    """
     username = request.data.get('username')
     password = request.data.get('password')
     
@@ -24,12 +21,21 @@ def login_view(request):
     user = authenticate(username=username, password=password)
     
     if user is not None:
-        # Login success, return basic user info
+        # Role ya user
+        role = user.role
+        
+        # Dashboard redirect kulingana na role
+        if role == 'admin':
+            redirect_to = '/admin-dashboard'
+        else:
+            redirect_to = '/user-dashboard'
+        
         return Response({
             'message': 'Login successful',
             'user_id': user.id,
             'username': user.username,
-            'role': user.role
+            'role': role,
+            'redirect_to': redirect_to  # Hii ndiyo muhimu
         })
     else:
         return Response({'error': 'Invalid credentials'}, status=401)
